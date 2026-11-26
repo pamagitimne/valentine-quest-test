@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Valentine Ledger — Валентайн: Последнее дело</title>
+
+  <!-- Подключение шрифтов с поддержкой кириллицы в стиле газет XIX века -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Playfair+Display:ital,wght@0,600..900;1,600..900&family=Roboto+Slab:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS для адаптивной сетки и утилит -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --parchment-bg: #f3ead8;
+      --parchment-card: #faf4e8;
+      --parchment-dark: #e6d7bd;
+      --ink-primary: #1f1914;
+      --ink-muted: #57493d;
+      --wood-dark: #261a12;
+      --leather: #4a2c18;
+      --crimson: #8b1e1e;
+      --crimson-dark: #5e1111;
+      --gold-accent: #a67c37;
+      --loyal-blue: #234252;
+      --border-ink: #3a2d22;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Lora', Georgia, serif;
+      color: var(--ink-primary);
+      background-color: var(--wood-dark);
+      /* Текстура старой газетной бумаги с лёгким винтажным зерном */
+      background-image:
+        radial-gradient(circle at 50% 0%, rgba(74, 44, 24, 0.45), rgba(24, 15, 10, 0.92)),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px);
+      min-height: 100vh;
+    }
+
+    .newspaper-sheet {
+      background-color: var(--parchment-bg);
+      background-image:
+        radial-gradient(ellipse at top left, rgba(255, 250, 240, 0.65), transparent 60%),
+        radial-gradient(ellipse at bottom right, rgba(166, 124, 55, 0.16), transparent 65%),
+        repeating-linear-gradient(90deg, rgba(58, 45, 34, 0.025) 0px, rgba(58, 45, 34, 0.025) 1px, transparent 1px, transparent 6px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), inset 0 0 60px rgba(139, 105, 60, 0.18);
+      border: 2px solid var(--border-ink);
+    }
+
+    .font-display {
+      font-family: 'Playfair Display', Georgia, serif;
+    }
+
+    .font-slab {
+      font-family: 'Roboto Slab', Georgia, serif;
+    }
+
+    /* Газетные двойные линейки */
+    .double-rule {
+      border-top: 3px double var(--border-ink);
+      border-bottom: 1px solid var(--border-ink);
+      padding: 4px 0;
+    }
+
+    .section-divider {
+      border: 0;
+      height: 4px;
+      border-top: 2px solid var(--border-ink);
+      border-bottom: 1px solid var(--border-ink);
+      margin: 1.75rem 0;
+    }
+
+    /* Навигационные вкладки */
+    .nav-tab {
+      font-family: 'Roboto Slab', serif;
+      border: 1px solid var(--border-ink);
+      background-color: var(--parchment-dark);
+      color: var(--ink-primary);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .nav-tab:hover {
+      background-color: #dfd0b4;
+    }
+
+    .nav-tab.active {
+      background-color: var(--wood-dark);
+      color: #f7eedc;
+      border-color: var(--wood-dark);
+      box-shadow: inset 0 -2px 0 var(--gold-accent);
+    }
+
+    /* Переключатель сценариев */
+    .scenario-btn {
+      border: 2px solid var(--border-ink);
+      background-color: var(--parchment-card);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .scenario-btn.active {
+      background-color: var(--leather);
+      color: #fbf5e8;
+      border-color: var(--wood-dark);
+      box-shadow: 0 4px 12px rgba(38, 26, 18, 0.28);
+    }
+
+    .scenario-btn.active .scenario-sub {
+      color: #e6cfa8;
+    }
+
+    /* 3D-карточки ролей с переворотом */
+    .role-card-wrapper {
+      perspective: 1100px;
+      height: 295px;
+      cursor: pointer;
+    }
+
+    .role-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-style: preserve-3d;
+    }
+
+    .role-card-wrapper.flipped .role-card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .role-card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border: 2px solid var(--border-ink);
+      background-color: var(--parchment-card);
+      box-shadow: 3px 4px 0 rgba(58, 45, 34, 0.22);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 1rem;
+    }
+
+    .role-card-front {
+      background-image: radial-gradient(circle at center, rgba(255, 253, 248, 0.8), rgba(235, 221, 195, 0.55));
+    }
+
+    .role-card-back {
+      transform: rotateY(180deg);
+      background-color: #f7efe0;
+    }
+
+    .role-card-back.faction-loyal {
+      border-top: 6px solid var(--loyal-blue);
+    }
+
+    .role-card-back.faction-rat {
+      border-top: 6px solid var(--crimson);
+    }
+
+    /* Интерактивные пины на карте Валентайна */
+    .map-pin {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      transition: transform 0.2s ease, background-color 0.2s ease;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .map-pin:hover,
+    .map-pin.active {
+      transform: translate(-50%, -50%) scale(1.15);
+      z-index: 20;
+    }
+
+    .map-pin.active .pin-badge {
+      background-color: var(--crimson);
+      color: #fff8eb;
+      border-color: #fff8eb;
+      box-shadow: 0 0 0 4px rgba(139, 30, 30, 0.35);
+    }
+
+    /* Анимация появления вкладок */
+    .tab-panel {
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="py-4 px-2 sm:py-8 sm:px-4">
+
+  <!-- Главный газетный лист -->
+  <main class="newspaper-sheet max-w-5xl mx-auto rounded-md p-4 sm:p-8 md:p-10">
+
+    <!-- ШАПКА ГАЗЕТЫ (HERO HEADER) -->
+    <header class="text-center">
+      <div class="flex flex-wrap items-center justify-between text-xs sm:text-sm font-slab uppercase tracking-widest text-[#57493d] pb-2 border-b border-[#3a2d22]">
+        <span>Нью-Ганновер · Валентайн</span>
+        <span>Специальный выпуск · Свод правил и досье</span>
+        <span>8 Игроков · Без платы за вход</span>
+      </div>
+
+      <div class="py-4 sm:py-6">
+        <p class="font-slab text-xs sm:text-sm uppercase tracking-[0.28em] text-[#8b1e1e] font-bold mb-1">
+          The Valentine Ledger &amp; Gang Dossier
+        </p>
+        <h1 class="font-display text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-[#1f1914] leading-none">
+          Валентайн: Последнее дело
+        </h1>
+        <p class="mt-3 text-sm sm:text-base italic text-[#4a3c30] max-w-2xl mx-auto">
+          «Мы провернём пять дел, заберём общак и уйдём на закат. Главное — понять, кто держит револьвер за спиной, прежде чем прозвучит команда на Противостояние».
+        </p>
+      </div>
+
+      <!-- Сводная полоса ключевых параметров -->
+      <div class="double-rule grid grid-cols-2 sm:grid-cols-4 gap-2 text-center bg-[#eadcc3]/70 px-2 py-2.5">
+        <div class="border-r border-[#3a2d22]/30 pr-2">
+          <span class="block font-slab text-xs uppercase tracking-wider text-[#57493d]">Состав банды</span>
+          <strong class="font-display text-lg sm:text-xl font-bold">8 Игроков</strong>
+        </div>
+        <div class="sm:border-r sm:border-[#3a2d22]/30 pr-2">
+          <span class="block font-slab text-xs uppercase tracking-wider text-[#57493d]">Всего раундов</span>
+          <strong class="font-display text-lg sm:text-xl font-bold">5 Дел (до 3 побед)</strong>
+        </div>
+        <div class="border-r border-[#3a2d22]/30 pr-2">
+          <span class="block font-slab text-xs uppercase tracking-wider text-[#57493d]">Жетон лидера</span>
+          <strong class="font-display text-lg sm:text-xl font-bold">Кредит доверия</strong>
+        </div>
+        <div>
+          <span class="block font-slab text-xs uppercase tracking-wider text-[#57493d]">Развязка</span>
+          <strong class="font-display text-lg sm:text-xl font-bold text-[#8b1e1e]">Противостояние</strong>
+        </div>
+      </div>
+    </header>
+
+    <!-- НАВИГАЦИЯ ПО РАЗДЕЛАМ САЙТА -->
+    <nav aria-label="Разделы справочника" class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+      <button type="button" class="nav-tab active rounded px-4 py-3 text-sm sm:text-base font-bold uppercase tracking-wider" data-tab="roles">
+        1. Досье и Сценарии
+      </button>
+      <button type="button" class="nav-tab rounded px-4 py-3 text-sm sm:text-base font-bold uppercase tracking-wider" data-tab="rules">
+        2. Правила и Ход игры
+      </button>
+      <button type="button" class="nav-tab rounded px-4 py-3 text-sm sm:text-base font-bold uppercase tracking-wider" data-tab="map">
+        3. Карта Валентайна
+      </button>
+    </nav>
+
+    <hr class="section-divider" />
+
+    <!-- =========================================================
+         ВКЛАДКА 1: СЦЕНАРИИ И ИНТЕРАКТИВНЫЕ КАРТОЧКИ РОЛЕЙ
+         ========================================================= -->
+    <section id="tab-roles" class="tab-panel active">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
+        <div>
+          <span class="font-slab text-xs uppercase tracking-widest text-[#8b1e1e] font-bold">Архив Судьи</span>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold">Выбор сценария партии</h2>
+          <p class="text-sm text-[#4a3c30] mt-1">
+            Оба сценария работают по единым правилам «Квеста» на 8 человек. Нажмите на любую карточку ниже, чтобы вскрыть досье роли.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="flip-all-btn" class="font-slab text-xs uppercase tracking-wider px-3 py-2 border border-[#3a2d22] bg-[#faf4e8] hover:bg-[#e6d7bd] rounded">
+            Вскрыть / Скрыть все карточки
+          </button>
+        </div>
+      </div>
+
+      <!-- Переключатель между Сценарием 1 и Сценарием 2 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+        <button type="button" class="scenario-btn active rounded-md p-4 text-left" data-scenario="frontier">
+          <div class="flex items-center justify-between">
+            <span class="font-slab text-xs uppercase tracking-widest opacity-80">Сценарий I · Базовый</span>
+            <span class="font-slab text-xs px-2 py-0.5 rounded bg-[#a67c37] text-[#1f1914] font-bold">5 Верных / 3 Крысы</span>
+          </div>
+          <h3 class="font-display text-xl font-bold mt-1">«Общий фронтир»</h3>
+          <p class="scenario-sub text-xs sm:text-sm mt-1 text-[#57493d]">
+            Классическая адаптация ролей «Квеста» под безымянных стрелков и предателей Дикого Запада. Идеально для первых партий.
+          </p>
+        </button>
+
+        <button type="button" class="scenario-btn rounded-md p-4 text-left" data-scenario="vanderlinde">
+          <div class="flex items-center justify-between">
+            <span class="font-slab text-xs uppercase tracking-widest opacity-80">Сценарий II · Сюжетный</span>
+            <span class="font-slab text-xs px-2 py-0.5 rounded bg-[#8b1e1e] text-[#faf4e8] font-bold">Датч гарантирован</span>
+          </div>
+          <h3 class="font-display text-xl font-bold mt-1">«Банда Ван дер Линде»</h3>
+          <p class="scenario-sub text-xs sm:text-sm mt-1 text-[#57493d]">
+            Именные герои RDR2. <strong>Датч Ван дер Линде</strong> гарантированно выпадает в каждой партии как главный закулисный кукловод Крыс.
+          </p>
+        </button>
+      </div>
+
+      <!-- Описание активного сценария -->
+      <div id="scenario-banner" class="mb-6 p-3.5 rounded border border-[#3a2d22] bg-[#eadcc3]/80 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <span id="scenario-summary">
+          <strong>Сценарий I «Общий фронтир»:</strong> 5 Людей банды против 3 Крыс. Наводчик знает двух крыс, но не видит Вожака.
+        </span>
+        <span class="font-slab text-xs uppercase tracking-wider text-[#8b1e1e] font-bold shrink-0">
+          Клик по карточке → переворот
+        </span>
+      </div>
+
+      <!-- Сетка интерактивных карточек ролей -->
+      <div id="roles-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Карточки генерируются через JavaScript из объекта SCENARIOS -->
+      </div>
+    </section>
+
+    <!-- =========================================================
+         ВКЛАДКА 2: ПРАВИЛА И ХОД ИГРЫ В MINECRAFT
+         ========================================================= -->
+    <section id="tab-rules" class="tab-panel">
+      <div class="mb-5">
+        <span class="font-slab text-xs uppercase tracking-widest text-[#8b1e1e] font-bold">Регламент Валентайна</span>
+        <h2 class="font-display text-2xl sm:text-3xl font-bold">Правила игры и цикл пяти дел</h2>
+        <p class="text-sm text-[#4a3c30] mt-1">
+          Адаптированная механика настольной игры «Квест»: без голосований за отряды, с жёсткой проверкой через книги с пером и финальным Противостоянием.
+        </p>
+      </div>
+
+      <!-- Блок 1: Подготовка и ночь -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+        <article class="p-4 rounded border border-[#3a2d22] bg-[#faf4e8]">
+          <h3 class="font-display text-xl font-bold border-b border-[#3a2d22]/40 pb-1.5 mb-2.5">
+            I. Раздача ролей и знакомство
+          </h3>
+          <ol class="list-decimal pl-5 space-y-2 text-sm leading-relaxed">
+            <li>
+              <strong>Встреча с Судьёй:</strong> каждый из 8 игроков по очереди заходит с Судьёй в закрытый домик в Валентайне и получает свою роль.
+            </li>
+            <li>
+              <strong>Фаза «Ночи» (знакомство):</strong> Судья сообщает <strong>Крысам</strong>, кто их напарники (кроме <em>Одиночки / Слепой крысы</em>), а <strong>Наводчику / Информатору</strong> раскрывает крыс, кроме <em>Главного злодея / Датча</em>.
+            </li>
+            <li>
+              <strong>Стартовый круг (3 минуты):</strong> вся банда собирается у салуна и проводит <strong>3 минуты</strong> общего обсуждения, после чего назначается первый <strong>Организатор дела</strong>.
+            </li>
+          </ol>
+        </article>
+
+        <article class="p-4 rounded border border-[#3a2d22] bg-[#faf4e8]">
+          <h3 class="font-display text-xl font-bold border-b border-[#3a2d22]/40 pb-1.5 mb-2.5">
+            II. Жетон «Кредит доверия»
+          </h3>
+          <p class="text-sm leading-relaxed mb-2">
+            В начале каждого раунда текущий <strong>Организатор дела</strong> получает от Судьи особый предмет — <strong>«Кредит доверия»</strong> (переименованный золотой самородок или перо).
+          </p>
+          <ul class="list-disc pl-5 space-y-1.5 text-sm leading-relaxed">
+            <li>
+              Вместе с назначением отряда на дело Организатор вручает <strong>Кредит доверия</strong> одному из выбранных участников (нельзя отдать самому себе).
+            </li>
+            <li>
+              <strong>Эффект жетона:</strong> владелец Кредита доверия на этом деле обязан сыграть в открытую перед Судьёй / вскрыть свою верность после дела (по выбранной модификации «Квеста»: проверка карты или обязательный «Успех» для честного игрока).
+            </li>
+          </ul>
+        </article>
+      </div>
+
+      <!-- Блок 2: Таблица 5 дел на 8 игроков -->
+      <div class="mb-6 p-4 rounded border-2 border-[#3a2d22] bg-[#faf4e8]">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="font-display text-xl font-bold">III. Сетка пяти дел (для 8 игроков)</h3>
+            <p class="text-xs text-[#57493d]">
+              В «Квесте» <strong>нет голосования за состав отряда</strong>: Организатор обсуждает выбор с бандой, называет имена и сразу отправляет группу на дело.
+            </p>
+          </div>
+          <span class="font-slab text-xs uppercase px-2.5 py-1 bg-[#261a12] text-[#faf4e8] rounded self-start">
+            Победа в раундах: 3 из 5
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center">
+          <div class="p-3 rounded border border-[#3a2d22] bg-[#f3ead8]">
+            <span class="block font-slab text-xs uppercase text-[#57493d]">Дело №1</span>
+            <strong class="font-display text-2xl font-black block my-1">3 чел.</strong>
+            <span class="text-xs text-[#4a3c30]">1 саботаж = провал</span>
+          </div>
+          <div class="p-3 rounded border border-[#3a2d22] bg-[#f3ead8]">
+            <span class="block font-slab text-xs uppercase text-[#57493d]">Дело №2</span>
+            <strong class="font-display text-2xl font-black block my-1">4 чел.</strong>
+            <span class="text-xs text-[#4a3c30]">1 саботаж = провал</span>
+          </div>
+          <div class="p-3 rounded border border-[#3a2d22] bg-[#f3ead8]">
+            <span class="block font-slab text-xs uppercase text-[#57493d]">Дело №3</span>
+            <strong class="font-display text-2xl font-black block my-1">4 чел.</strong>
+            <span class="text-xs text-[#4a3c30]">1 саботаж = провал</span>
+          </div>
+          <div class="p-3 rounded border-2 border-[#8b1e1e] bg-[#fdf6ec]">
+            <span class="block font-slab text-xs uppercase text-[#8b1e1e] font-bold">Дело №4 ★</span>
+            <strong class="font-display text-2xl font-black block my-1">5 чел.</strong>
+            <span class="text-xs font-bold text-[#8b1e1e]">Нужно 2 саботажа!</span>
+          </div>
+          <div class="col-span-2 sm:col-span-1 p-3 rounded border-2 border-[#261a12] bg-[#e6d7bd]">
+            <span class="block font-slab text-xs uppercase text-[#1f1914] font-bold">Последнее дело</span>
+            <strong class="font-display text-2xl font-black block my-1">5 чел.</strong>
+            <span class="text-xs text-[#1f1914]">1 саботаж = провал</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Блок 3: Механика в Minecraft и Финальное Противостояние -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <article class="p-4 rounded border border-[#3a2d22] bg-[#faf4e8]">
+          <h3 class="font-display text-xl font-bold border-b border-[#3a2d22]/40 pb-1.5 mb-2.5">
+            IV. Выполнение дела в Minecraft
+          </h3>
+          <ul class="list-disc pl-5 space-y-2 text-sm leading-relaxed">
+            <li>
+              <strong>Выезд на точку:</strong> выбранный отряд верхом на лошадях отправляется в указанную локацию Валентайна; остальные ждут у салуна и обсуждают ход партии.
+            </li>
+            <li>
+              <strong>Механизм воронки:</strong> участники встают на нажимные плиты (схема «И»), открывающие доступ к воронке.
+            </li>
+            <li>
+              <strong>Тайное решение:</strong> каждый берёт книгу с пером, пишет <strong>«Успех»</strong> (люди банды обязаны писать только «Успех») или <strong>«Саботаж»</strong> (доступно Крысам), <strong>не подписывает книгу</strong> и кидает в воронку.
+            </li>
+            <li>
+              <strong>Итог дела:</strong> по возвращении Судья перемешивает книги и объявляет результат дела.
+            </li>
+          </ul>
+        </article>
+
+        <article class="p-4 rounded border-2 border-[#8b1e1e] bg-[#fbf3eb]">
+          <h3 class="font-display text-xl font-bold text-[#8b1e1e] border-b border-[#8b1e1e]/40 pb-1.5 mb-2.5">
+            V. Финал: «Противостояние»
+          </h3>
+          <p class="text-sm leading-relaxed mb-2">
+            Если <strong>Крысы</strong> сорвали 3 дела — они побеждают сразу. Но если <strong>Люди банды</strong> первыми закрыли <strong>3 дела</strong>, игра не заканчивается — вся банда выходит на главную улицу Валентайна на финальное <strong>Противостояние</strong>:
+          </p>
+          <ul class="list-disc pl-5 space-y-1.5 text-sm leading-relaxed">
+            <li>
+              <strong>Охота на Главаря (Короля Артура / Ветерана):</strong> Крысы совещаются и решают, кого из Людей банды застрелить.
+            </li>
+            <li>
+              <strong>Книги в общий сундук:</strong> чтобы никто не сжульничал и не сменил прицел в последний момент, игроки фиксируют выбор в книге с пером и сбрасывают в центральный сундук Судьи.
+            </li>
+            <li>
+              Если Крысы вычислили главную цель (<strong>Ветерана банды / Артура</strong>) — победа уходит Крысам. Если промахнулись — банда уходит с общаком!
+            </li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         ВКЛАДКА 3: ИНТЕРАКТИВНАЯ КАРТА ВАЛЕНТАЙНА
+         ========================================================= -->
+    <section id="tab-map" class="tab-panel">
+      <div class="mb-5">
+        <span class="font-slab text-xs uppercase tracking-widest text-[#8b1e1e] font-bold">План города</span>
+        <h2 class="font-display text-2xl sm:text-3xl font-bold">Карта Валентайна и точки дел</h2>
+        <p class="text-sm text-[#4a3c30] mt-1">
+          Нажмите на отметку на схеме города или на карточку справа, чтобы посмотреть назначение постройки на сервере.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <!-- Схематичная карта главной улицы Валентайна (SVG) -->
+        <div class="lg:col-span-7 relative rounded border-2 border-[#3a2d22] bg-[#e9dac0] overflow-hidden shadow-inner">
+          <svg viewBox="0 0 600 400" class="w-full h-auto block" role="img" aria-label="Схема города Валентайн">
+            <!-- Фон земли и холмов -->
+            <rect width="600" height="400" fill="#e6d5b8" />
+            <path d="M0,70 Q150,40 310,65 T600,55 L600,0 L0,0 Z" fill="#d5c19e" />
+            <path d="M0,340 Q220,315 400,345 T600,330 L600,400 L0,400 Z" fill="#d5c19e" />
+
+            <!-- Железная дорога справа -->
+            <line x1="525" y1="0" x2="525" y2="400" stroke="#57493d" stroke-width="6" />
+            <line x1="537" y1="0" x2="537" y2="400" stroke="#57493d" stroke-width="6" />
+            <line x1="531" y1="0" x2="531" y2="400" stroke="#3a2d22" stroke-width="14" stroke-dasharray="4 10" />
+
+            <!-- Главная грязная дорога Валентайна -->
+            <path d="M 35,215 Q 190,195 340,210 T 515,205" fill="none" stroke="#c5ae87" stroke-width="46" stroke-linecap="round" />
+            <path d="M 35,215 Q 190,195 340,210 T 515,205" fill="none" stroke="#9e845c" stroke-width="46" stroke-dasharray="12 18" opacity="0.35" />
+
+            <!-- Ответвление к загонам скота -->
+            <path d="M 160,210 L 145,310" fill="none" stroke="#c5ae87" stroke-width="26" stroke-linecap="round" />
+
+            <!-- Силуэты зданий -->
+            <!-- Салун -->
+            <rect x="215" y="115" width="76" height="46" rx="3" fill="#b89b72" stroke="#3a2d22" stroke-width="2" />
+            <!-- Банк -->
+            <rect x="330" y="120" width="66" height="44" rx="3" fill="#b89b72" stroke="#3a2d22" stroke-width="2" />
+            <!-- Офис шерифа -->
+            <rect x="95" y="130" width="64" height="42" rx="3" fill="#b89b72" stroke="#3a2d22" stroke-width="2" />
+            <!-- Загоны для овец -->
+            <rect x="85" y="285" width="110" height="65" rx="3" fill="none" stroke="#3a2d22" stroke-width="2" stroke-dasharray="6 4" />
+            <!-- Станция -->
+            <rect x="445" y="145" width="62" height="95" rx="3" fill="#b89b72" stroke="#3a2d22" stroke-width="2" />
+
+            <!-- Компас и надпись на карте -->
+            <g transform="translate(55, 55)">
+              <circle cx="0" cy="0" r="22" fill="#faf4e8" stroke="#3a2d22" stroke-width="1.5" />
+              <polygon points="0,-16 4,0 0,16 -4,0" fill="#8b1e1e" />
+              <text x="0" y="-25" text-anchor="middle" font-family="Roboto Slab, serif" font-size="10" font-weight="bold" fill="#3a2d22">N</text>
+            </g>
+            <text x="300" y="382" text-anchor="middle" font-family="Playfair Display, serif" font-size="14" font-weight="bold" letter-spacing="3" fill="#57493d">
+              VALENTINE · NEW HANOVER
+            </text>
+          </svg>
+
+          <!-- Интерактивные пины поверх карты -->
+          <button type="button" class="map-pin active" style="left: 42%; top: 34%;" data-loc="saloon" aria-label="Салун Смитфилдс">
+            <span class="pin-badge font-slab text-xs font-bold px-2.5 py-1 rounded-full bg-[#261a12] text-[#faf4e8] border-2 border-[#faf4e8] shadow">
+              1. Салун
+            </span>
+          </button>
+
+          <button type="button" class="map-pin" style="left: 61%; top: 35%;" data-loc="bank" aria-label="Банк Валентайна">
+            <span class="pin-badge font-slab text-xs font-bold px-2.5 py-1 rounded-full bg-[#261a12] text-[#faf4e8] border-2 border-[#faf4e8] shadow">
+              2. Банк
+            </span>
+          </button>
+
+          <button type="button" class="map-pin" style="left: 21%; top: 38%;" data-loc="sheriff" aria-label="Офис шерифа">
+            <span class="pin-badge font-slab text-xs font-bold px-2.5 py-1 rounded-full bg-[#261a12] text-[#faf4e8] border-2 border-[#faf4e8] shadow">
+              3. Шериф
+            </span>
+          </button>
+
+          <button type="button" class="map-pin" style="left: 24%; top: 79%;" data-loc="livestock" aria-label="Загоны скота">
+            <span class="pin-badge font-slab text-xs font-bold px-2.5 py-1 rounded-full bg-[#261a12] text-[#faf4e8] border-2 border-[#faf4e8] shadow">
+              4. Загоны
+            </span>
+          </button>
+
+          <button type="button" class="map-pin" style="left: 80%; top: 48%;" data-loc="station" aria-label="Железнодорожная станция">
+            <span class="pin-badge font-slab text-xs font-bold px-2.5 py-1 rounded-full bg-[#261a12] text-[#faf4e8] border-2 border-[#faf4e8] shadow">
+              5. Станция
+            </span>
+          </button>
+        </div>
+
+        <!-- Карточка описания выбранной локации -->
+        <div class="lg:col-span-5 space-y-3">
+          <div id="location-detail" class="p-5 rounded border-2 border-[#3a2d22] bg-[#faf4e8]">
+            <span id="loc-tag" class="font-slab text-xs uppercase tracking-widest text-[#8b1e1e] font-bold">
+              Точка сбора · Центр города
+            </span>
+            <h3 id="loc-title" class="font-display text-2xl font-bold mt-1">
+              1. Салун «Смитфилдс»
+            </h3>
+            <p id="loc-desc" class="text-sm leading-relaxed mt-2 text-[#2b221b]">
+              Главная штаб-квартира партии. Здесь банда проводит 3-минутные обсуждения, здесь Организатор набирает людей на дело, а на главной улице перед салуном в финале разворачивается «Противостояние» со сдачей книг в сундук.
+            </p>
+            <div class="mt-4 pt-3 border-t border-[#3a2d22]/30 text-xs font-slab text-[#57493d]">
+              <strong>Игровая роль:</strong> <span id="loc-mechanic">Лобби, обсуждения, сбор на дела и финальный сундук.</span>
+            </div>
+          </div>
+
+          <!-- Быстрый список всех 5 локаций -->
+          <div class="grid grid-cols-1 gap-1.5">
+            <button type="button" class="loc-list-btn text-left px-3 py-2 rounded border border-[#3a2d22] bg-[#faf4e8] hover:bg-[#e6d7bd] text-xs font-slab flex justify-between items-center" data-loc="saloon">
+              <span><strong>1. Салун «Смитфилдс»</strong> — Сбор и Противостояние</span>
+              <span>→</span>
+            </button>
+            <button type="button" class="loc-list-btn text-left px-3 py-2 rounded border border-[#3a2d22] bg-[#faf4e8] hover:bg-[#e6d7bd] text-xs font-slab flex justify-between items-center" data-loc="bank">
+              <span><strong>2. Банк Валентайна</strong> — Точка крупного дела</span>
+              <span>→</span>
+            </button>
+            <button type="button" class="loc-list-btn text-left px-3 py-2 rounded border border-[#3a2d22] bg-[#faf4e8] hover:bg-[#e6d7bd] text-xs font-slab flex justify-between items-center" data-loc="sheriff">
+              <span><strong>3. Офис шерифа</strong> — Домик выдачи ролей</span>
+              <span>→</span>
+            </button>
+            <button type="button" class="loc-list-btn text-left px-3 py-2 rounded border border-[#3a2d22] bg-[#faf4e8] hover:bg-[#e6d7bd] text-xs font-slab flex justify-between items-center" data-loc="livestock">
+              <span><strong>4. Загоны для скота</strong> — Точка малого дела</span>
+              <span>→</span>
+            </button>
+            <button type="button" class="loc-list-btn text-left px-3 py-2 rounded border border-[#3a2d22] bg-[#faf4e8] hover:bg-[#e6d7bd] text-xs font-slab flex justify-between items-center" data-loc="station">
+              <span><strong>5. Ж/д станция</strong> — Налёт на почтовый вагон</span>
+              <span>→</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ПОДВАЛ ГАЗЕТЫ -->
+    <footer class="mt-8 pt-4 border-t-2 border-[#3a2d22] flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#57493d] font-slab">
+      <span>Valentine Ledger · Справочник для сервера Minecraft (8 игроков)</span>
+      <span>Редактируется в одном файле index.html · Готово для GitHub Pages</span>
+    </footer>
+  </main>
+
+  <!-- =========================================================
+       ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ВКЛАДОК, СЦЕНАРИЕВ, КАРТОЧЕК И КАРТЫ
+       Все тексты ролей и локаций легко править прямо здесь!
+       ========================================================= -->
+  <script>
+    // База данных двух сценариев (на 8 игроков: 5 Людей банды + 3 Крысы)
+    const SCENARIOS = {
+      frontier: {
+        summary: '<strong>Сценарий I «Общий фронтир»:</strong> 5 Людей банды против 3 Крыс. Наводчик видит двух крыс, но не знает Вожака; Одиночка играет вслепую.',
+        roles: [
+          {
+            name: 'Ветеран банды',
+            questAnalog: 'Аналог: Король Артур',
+            faction: 'loyal',
+            factionLabel: 'Люди банды · Цель охоты',
+            icon: '★',
+            shortHint: 'Главная цель Крыс на финальном Противостоянии.',
+            ability: 'Не знает никого на старте, но именно за его головой охотятся Крысы в финале. Если Люди банды закрыли 3 дела, Крысы побеждают только если угадают Ветерана.'
+          },
+          {
+            name: 'Наводчик',
+            questAnalog: 'Аналог: Провидец / Мерлин',
+            faction: 'loyal',
+            factionLabel: 'Люди банды · Разведка',
+            icon: '◎',
+            shortHint: 'Видит почти всех крыс в начале партии.',
+            ability: 'На этапе знакомства Судья показывает Наводчику двух Крыс (Одиночку и Обычную крысу), но <strong>Вожак крыс</strong> остаётся для него скрытым. Должен помогать банде не выдавая себя.'
+          },
+          {
+            name: 'Верный стрелок (×3)',
+            questAnalog: 'Аналог: Верные рыцари (3 карты)',
+            faction: 'loyal',
+            factionLabel: 'Люди банды · Основа',
+            icon: '❖',
+            shortHint: 'Трое честных бойцов без особых способностей.',
+            ability: 'На делах всегда сдают книгу <strong>«Успех»</strong>. Вычисляют предателей по поведению, выборам отрядов и использованию Кредита доверия.'
+          },
+          {
+            name: 'Вожак крыс',
+            questAnalog: 'Аналог: Мордред',
+            faction: 'rat',
+            factionLabel: 'Крысы · Скрытый лидер',
+            icon: '☠',
+            shortHint: 'Невидим для Наводчика на старте.',
+            ability: 'Знает Обычную крысу, но <strong>невидим для Наводчика</strong>. Может тайно саботировать дела и руководит выбором цели на финальном Противостоянии.'
+          },
+          {
+            name: 'Крыса-сообщник',
+            questAnalog: 'Аналог: Приспешник / Моргана',
+            faction: 'rat',
+            factionLabel: 'Крысы · Саботаж',
+            icon: '▲',
+            shortHint: 'Знает Вожака и срывает дела.',
+            ability: 'Знает Вожака крыс, но не знает Одиночку. Может сдавать в воронку книгу <strong>«Саботаж»</strong> и прикрывать Вожака в спорах.'
+          },
+          {
+            name: 'Крыса-одиночка',
+            questAnalog: 'Аналог: Оберон / Слепая крыса',
+            faction: 'rat',
+            factionLabel: 'Крысы · Вне сети',
+            icon: '◈',
+            shortHint: 'Не знает других крыс, и они не знают её.',
+            ability: 'Играет за Крыс и может саботировать дела, но на старте не знакомится с остальными предателями (при этом Наводчик её видит).'
+          }
+        ]
+      },
+      vanderlinde: {
+        summary: '<strong>Сценарий II «Банда Ван дер Линде»:</strong> Именные герои RDR2. <strong>Датч Ван дер Линде</strong> гарантированно в игре как главный закулисный манипулятор Крыс.',
+        roles: [
+          {
+            name: 'Артур Морган',
+            questAnalog: 'Аналог: Король Артур · Главная цель',
+            faction: 'loyal',
+            factionLabel: 'Люди банды · Правая рука',
+            icon: '★',
+            shortHint: 'Главная мишень Датча и Мики в финале.',
+            ability: 'Опора лагеря. Не знает, кто предал банду, но если люди закроют 3 дела, люди Датча в финальном <strong>Противостоянии</strong> будут пытаться вычислить именно Артура.'
+          },
+          {
+            name: 'Хозия Мэттьюз',
+            questAnalog: 'Аналог: Провидец / Мерлин',
+            faction: 'loyal',
+            factionLabel: 'Люди банды · Старый лис',
+            icon: '◎',
+            shortHint: 'Видит насквозь Мику и шестёрок, но верит Датчу.',
+            ability: 'На старте Судья открывает Хозии двух предателей (Мику и Клита), но <strong>Датч Ван дер Линде</strong> для него не виден. Должен вести банду аккуратно, чтобы не подставиться.'
+          },
+          {
+            name: 'Джон, Сэди и Чарльз (×3)',
+            questAnalog: 'Аналог: Верные рыцари (3 карты)',
+            faction: 'loyal',
+            factionLabel: 'Люди банды · Верные',
+            icon: '❖',
+            shortHint: 'Три верных бойца (Джон Марстон, Сэди Адлер, Чарльз Смит).',
+            ability: 'Всегда сдают <strong>«Успех»</strong> на делах. Помогают Артуру и Хозии вывести крыс на чистую воду до финального Противостояния.'
+          },
+          {
+            name: 'Датч Ван дер Линде',
+            questAnalog: 'Гарантированная роль · Аналог: Мордред',
+            faction: 'rat',
+            factionLabel: 'Крысы · Кукловод (100% в игре)',
+            icon: '♛',
+            shortHint: 'Выпадает в каждой партии этого сценария.',
+            ability: 'Скрыт от глаз Хозии на старте. Знает Мику Белла, толкает речи про «план и веру», срывает дела и указывает, в кого стрелять на финальном Противостоянии.'
+          },
+          {
+            name: 'Мика Белл',
+            questAnalog: 'Аналог: Приспешник / Правая рука',
+            faction: 'rat',
+            factionLabel: 'Крысы · Провокатор',
+            icon: '▲',
+            shortHint: 'Знает Датча и сеет хаос в лагере.',
+            ability: 'Работает в связке с Датчем (но не знает Клита). Может саботировать дела и отводить подозрения от Датча, принимая удар на себя.'
+          },
+          {
+            name: 'Клит (или Джо)',
+            questAnalog: 'Аналог: Оберон / Пришлый бандит',
+            faction: 'rat',
+            factionLabel: 'Крысы · Пришлый',
+            icon: '◈',
+            shortHint: 'Новый человек Мики, не знакомый с Датчем.',
+            ability: 'Играет на стороне Крыс и может сдавать <strong>«Саботаж»</strong>, но на старте не знает ни Датча, ни Мику (зато Хозия видит его с первого раунда).'
+          }
+        ]
+      }
+    };
+
+    // Данные по локациям Валентайна
+    const LOCATIONS = {
+      saloon: {
+        tag: 'Точка сбора · Центр города',
+        title: '1. Салун «Смитфилдс»',
+        desc: 'Главная штаб-квартира партии. Здесь банда проводит 3-минутные обсуждения, здесь Организатор набирает людей на дело, а на главной улице перед салуном в финале разворачивается «Противостояние» со сдачей книг в сундук.',
+        mechanic: 'Лобби, обсуждения, сбор на дела и финальный сундук.'
+      },
+      bank: {
+        tag: 'Локация дела · Крупный куш',
+        title: '2. Банк Валентайна',
+        desc: 'Укреплённое здание на главной улице. Используется для крупных дел на 4–5 посланцев. Внутри установлены нажимные плиты по схеме «И» и закрытая воронка для сброса книг с решением.',
+        mechanic: 'Точка проведения дел №3–№5 (4–5 участников).'
+      },
+      sheriff: {
+        tag: 'Служебная зона · Судья',
+        title: '3. Офис шерифа',
+        desc: 'Закрытое помещение с камерами, куда Судья по одному приглашает игроков перед стартом партии, чтобы выдать роль и провести фазу «Ночи» без лишних ушей.',
+        mechanic: 'Индивидуальная выдача ролей и проверка «Кредита доверия».'
+      },
+      livestock: {
+        tag: 'Локация дела · Окраина',
+        title: '4. Загоны для скота',
+        desc: 'Аукционный двор и загоны на южном краю Валентайна. Удобная ближняя точка для первого малого дела на 3 посланцев (отсылка к угону отары).',
+        mechanic: 'Точка проведения малых дел №1–№2 (3 участника).'
+      },
+      station: {
+        tag: 'Локация дела · Железная дорога',
+        title: '5. Железнодорожная станция',
+        desc: 'Вокзал и товарные пути на восточном въезде в город. Отличная точка для налётов на почтовый дилижанс или товарный вагон во второй половине партии.',
+        mechanic: 'Точка проведения средних и крупных дел (4–5 участников).'
+      }
+    };
+
+    // --- 1. Переключение верхних вкладок ---
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    navTabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.tab;
+        navTabs.forEach((t) => t.classList.remove('active'));
+        tabPanels.forEach((p) => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`tab-${target}`).classList.add('active');
+      });
+    });
+
+    // --- 2. Рендер карточек ролей и переключение сценариев ---
+    let currentScenario = 'frontier';
+    let allFlipped = false;
+
+    const rolesGrid = document.getElementById('roles-grid');
+    const scenarioSummary = document.getElementById('scenario-summary');
+    const scenarioBtns = document.querySelectorAll('.scenario-btn');
+    const flipAllBtn = document.getElementById('flip-all-btn');
+
+    function renderRoles(scenarioKey) {
+      const data = SCENARIOS[scenarioKey];
+      scenarioSummary.innerHTML = data.summary;
+      rolesGrid.innerHTML = '';
+
+      data.roles.forEach((role) => {
+        const card = document.createElement('div');
+        card.className = `role-card-wrapper ${allFlipped ? 'flipped' : ''}`;
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `Карточка роли: ${role.name}. Нажмите, чтобы перевернуть.`);
+
+        const factionClass = role.faction === 'rat' ? 'faction-rat' : 'faction-loyal';
+        const badgeColor = role.faction === 'rat'
+          ? 'bg-[#8b1e1e] text-[#faf4e8]'
+          : 'bg-[#234252] text-[#faf4e8]';
+
+        card.innerHTML = `
+          <div class="role-card-inner">
+            <!-- Лицевая сторона (закрытое досье) -->
+            <div class="role-card-face role-card-front text-center">
+              <div class="border-b border-[#3a2d22]/40 pb-1.5">
+                <span class="font-slab text-[11px] uppercase tracking-widest text-[#57493d]">
+                  ${role.questAnalog}
+                </span>
+              </div>
+              <div class="my-auto py-2">
+                <div class="w-12 h-12 mx-auto mb-2.5 rounded-full border-2 border-[#3a2d22] bg-[#faf4e8] flex items-center justify-center text-2xl font-bold text-[#261a12]">
+                  ${role.icon}
+                </div>
+                <h3 class="font-display text-xl font-bold text-[#1f1914] leading-tight">
+                  ${role.name}
+                </h3>
+                <p class="text-xs text-[#57493d] mt-2 px-1">
+                  ${role.shortHint}
+                </p>
+              </div>
+              <div class="pt-2 border-t border-[#3a2d22]/40">
+                <span class="font-slab text-[11px] uppercase tracking-wider text-[#8b1e1e] font-bold">
+                  Нажмите, чтобы вскрыть досье ↻
+                </span>
+              </div>
+            </div>
+
+            <!-- Оборотная сторона (раскрытая роль и способность) -->
+            <div class="role-card-face role-card-back ${factionClass}">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-2">
+                  <span class="font-slab text-[10px] uppercase tracking-wider px-2 py-0.5 rounded font-bold ${badgeColor}">
+                    ${role.factionLabel}
+                  </span>
+                  <span class="text-sm font-bold">${role.icon}</span>
+                </div>
+                <h4 class="font-display text-lg font-bold text-[#1f1914] border-b border-[#3a2d22]/30 pb-1">
+                  ${role.name}
+                </h4>
+                <p class="text-xs leading-relaxed text-[#2b221b] mt-2">
+                  ${role.ability}
+                </p>
+              </div>
+              <div class="pt-1.5 border-t border-[#3a2d22]/30 text-right">
+                <span class="font-slab text-[10px] uppercase tracking-wider text-[#57493d]">
+                  Свернуть карточку ↺
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const toggleFlip = () => card.classList.toggle('flipped');
+        card.addEventListener('click', toggleFlip);
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleFlip();
+          }
+        });
+
+        rolesGrid.appendChild(card);
+      });
+    }
+
+    scenarioBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentScenario = btn.dataset.scenario;
+        scenarioBtns.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderRoles(currentScenario);
+      });
+    });
+
+    flipAllBtn.addEventListener('click', () => {
+      allFlipped = !allFlipped;
+      document.querySelectorAll('.role-card-wrapper').forEach((card) => {
+        card.classList.toggle('flipped', allFlipped);
+      });
+    });
+
+    // --- 3. Интерактивная карта Валентайна ---
+    const mapPins = document.querySelectorAll('.map-pin');
+    const locListBtns = document.querySelectorAll('.loc-list-btn');
+    const locTag = document.getElementById('loc-tag');
+    const locTitle = document.getElementById('loc-title');
+    const locDesc = document.getElementById('loc-desc');
+    const locMechanic = document.getElementById('loc-mechanic');
+
+    function selectLocation(locKey) {
+      const info = LOCATIONS[locKey];
+      if (!info) return;
+
+      mapPins.forEach((pin) => {
+        pin.classList.toggle('active', pin.dataset.loc === locKey);
+      });
+
+      locListBtns.forEach((btn) => {
+        const isActive = btn.dataset.loc === locKey;
+        btn.style.backgroundColor = isActive ? '#e6d7bd' : '#faf4e8';
+        btn.style.borderWidth = isActive ? '2px' : '1px';
+      });
+
+      locTag.textContent = info.tag;
+      locTitle.textContent = info.title;
+      locDesc.textContent = info.desc;
+      locMechanic.textContent = info.mechanic;
+    }
+
+    mapPins.forEach((pin) => {
+      pin.addEventListener('click', () => selectLocation(pin.dataset.loc));
+    });
+
+    locListBtns.forEach((btn) => {
+      btn.addEventListener('click', () => selectLocation(btn.dataset.loc));
+    });
+
+    // Инициализация при загрузке страницы
+    renderRoles(currentScenario);
+    selectLocation('saloon');
+  </script>
+</body>
+</html>
